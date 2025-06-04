@@ -9,7 +9,192 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      donations: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          donor_country: string
+          donor_email: string
+          donor_name: string
+          id: string
+          payment_method: string
+          receipt_url: string | null
+          status: string
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          donor_country: string
+          donor_email: string
+          donor_name: string
+          id?: string
+          payment_method: string
+          receipt_url?: string | null
+          status?: string
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          donor_country?: string
+          donor_email?: string
+          donor_name?: string
+          id?: string
+          payment_method?: string
+          receipt_url?: string | null
+          status?: string
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      help_requests: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          location: string
+          requester_email: string
+          requester_name: string
+          requester_phone: string
+          status: string
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          location: string
+          requester_email: string
+          requester_name: string
+          requester_phone: string
+          status?: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string
+          requester_email?: string
+          requester_name?: string
+          requester_phone?: string
+          status?: string
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: []
+      }
+      our_work: {
+        Row: {
+          amount_spent: number | null
+          beneficiaries_count: number | null
+          category: string
+          created_at: string
+          date_completed: string | null
+          description: string
+          id: string
+          image_url: string | null
+          location: string
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          amount_spent?: number | null
+          beneficiaries_count?: number | null
+          category: string
+          created_at?: string
+          date_completed?: string | null
+          description: string
+          id?: string
+          image_url?: string | null
+          location: string
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          amount_spent?: number | null
+          beneficiaries_count?: number | null
+          category?: string
+          created_at?: string
+          date_completed?: string | null
+          description?: string
+          id?: string
+          image_url?: string | null
+          location?: string
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          reference_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          reference_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          reference_id?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

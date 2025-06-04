@@ -12,15 +12,19 @@ import {
   FileText,
   Shield,
   LogIn,
-  UserPlus
+  UserPlus,
+  LogOut,
+  User
 } from 'lucide-react';
 import AuthModal from './AuthModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const location = useLocation();
+  const { user, signOut, loading } = useAuth();
 
   const navItems = [
     { name: 'Donate Now', href: '/donate', icon: Heart },
@@ -36,7 +40,15 @@ const Navigation = () => {
     setIsAuthModalOpen(true);
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   const isActive = (href: string) => location.pathname === href;
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -67,25 +79,45 @@ const Navigation = () => {
               ))}
             </div>
 
-            {/* Auth Buttons */}
+            {/* Auth Section */}
             <div className="hidden lg:flex items-center space-x-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center space-x-2"
-                onClick={() => handleAuthClick('login')}
-              >
-                <LogIn className="h-4 w-4" />
-                <span>Login</span>
-              </Button>
-              <Button 
-                size="sm" 
-                className="bg-red-600 hover:bg-red-700 flex items-center space-x-2"
-                onClick={() => handleAuthClick('signup')}
-              >
-                <UserPlus className="h-4 w-4" />
-                <span>Sign Up</span>
-              </Button>
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 text-gray-700">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm">{user.email}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center space-x-2"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center space-x-2"
+                    onClick={() => handleAuthClick('login')}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="bg-red-600 hover:bg-red-700 flex items-center space-x-2"
+                    onClick={() => handleAuthClick('signup')}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span>Sign Up</span>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -120,21 +152,39 @@ const Navigation = () => {
                   </Link>
                 ))}
                 <div className="px-4 pt-4 border-t border-gray-200 space-y-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full flex items-center space-x-2"
-                    onClick={() => handleAuthClick('login')}
-                  >
-                    <LogIn className="h-4 w-4" />
-                    <span>Login</span>
-                  </Button>
-                  <Button 
-                    className="w-full bg-red-600 hover:bg-red-700 flex items-center space-x-2"
-                    onClick={() => handleAuthClick('signup')}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span>Sign Up</span>
-                  </Button>
+                  {user ? (
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-600 p-2">
+                        Signed in as: {user.email}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex items-center space-x-2"
+                        onClick={handleSignOut}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Logout</span>
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        className="w-full flex items-center space-x-2"
+                        onClick={() => handleAuthClick('login')}
+                      >
+                        <LogIn className="h-4 w-4" />
+                        <span>Login</span>
+                      </Button>
+                      <Button 
+                        className="w-full bg-red-600 hover:bg-red-700 flex items-center space-x-2"
+                        onClick={() => handleAuthClick('signup')}
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        <span>Sign Up</span>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

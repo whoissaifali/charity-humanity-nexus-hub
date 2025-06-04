@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Heart } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,11 +23,30 @@ const AuthModal = ({ isOpen, onClose, mode, onModeChange }: AuthModalProps) => {
     fullName: '',
     country: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { signUp, signIn } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase authentication here
-    console.log('Auth submission:', { mode, formData });
+    setIsLoading(true);
+
+    try {
+      if (mode === 'signup') {
+        if (formData.password !== formData.confirmPassword) {
+          alert('Passwords do not match');
+          return;
+        }
+        await signUp(formData.email, formData.password, formData.fullName, formData.country);
+      } else {
+        const { error } = await signIn(formData.email, formData.password);
+        if (!error) {
+          onClose();
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -125,8 +145,12 @@ const AuthModal = ({ isOpen, onClose, mode, onModeChange }: AuthModalProps) => {
             </div>
           )}
 
-          <Button type="submit" className="w-full bg-red-600 hover:bg-red-700">
-            {mode === 'login' ? 'Sign In' : 'Create Account'}
+          <Button 
+            type="submit" 
+            className="w-full bg-red-600 hover:bg-red-700"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
           </Button>
         </form>
 

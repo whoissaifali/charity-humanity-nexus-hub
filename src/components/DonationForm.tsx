@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, CreditCard } from 'lucide-react';
+import { Upload, CreditCard, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,8 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [receiptImage, setReceiptImage] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     amount: '',
     donor_name: '',
@@ -43,6 +45,39 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
     }
   });
 
+  const handleImageUpload = async (file: File): Promise<string | null> => {
+    try {
+      setUploadingImage(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `payment-receipts/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload receipt image",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.amount || !formData.donor_name || !formData.payment_method) {
@@ -56,13 +91,24 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
 
     setLoading(true);
     try {
+      let receiptUrl = null;
+      
+      if (receiptImage) {
+        receiptUrl = await handleImageUpload(receiptImage);
+        if (!receiptUrl) {
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('donations')
         .insert({
           ...formData,
           amount: parseFloat(formData.amount),
           user_id: user?.id || null,
-          status: 'pending'
+          status: 'pending',
+          receipt_url: receiptUrl
         });
 
       if (error) throw error;
@@ -80,6 +126,7 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
         payment_method: '',
         notes: ''
       });
+      setReceiptImage(null);
 
       onSuccess?.();
     } catch (error: any) {
@@ -165,6 +212,44 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
           </div>
 
           <div>
+            <Label htmlFor="receipt">Payment Receipt *</Label>
+            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <div className="text-center">
+                <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="mt-4">
+                  <label htmlFor="receipt-upload" className="cursor-pointer">
+                    <span className="mt-2 block text-sm font-medium text-gray-900">
+                      Upload payment receipt image
+                    </span>
+                    <input
+                      id="receipt-upload"
+                      type="file"
+                      className="sr-only"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setReceiptImage(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="mt-1 text-xs text-gray-500">
+                    PNG, JPG, GIF up to 10MB
+                  </p>
+                </div>
+              </div>
+              {receiptImage && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm font-medium text-green-600">
+                    ✓ {receiptImage.name} selected
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
             <Label htmlFor="notes">Additional Notes</Label>
             <Textarea
               id="notes"
@@ -179,17 +264,21 @@ const DonationForm = ({ onSuccess }: DonationFormProps) => {
             <div className="flex items-start space-x-2">
               <Upload className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900">Next Steps</h4>
+                <h4 className="font-medium text-blue-900">Upload Instructions</h4>
                 <p className="text-sm text-blue-700 mt-1">
-                  After submitting this form, please make your payment using the selected method and 
-                  upload your payment receipt for verification.
+                  Please upload a clear image of your payment receipt/screenshot for verification. 
+                  This helps us confirm your donation and process it faster.
                 </p>
               </div>
             </div>
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700">
-            {loading ? "Submitting..." : "Submit Donation"}
+          <Button 
+            type="submit" 
+            disabled={loading || uploadingImage || !receiptImage} 
+            className="w-full bg-red-600 hover:bg-red-700"
+          >
+            {loading ? "Submitting..." : uploadingImage ? "Uploading Receipt..." : "Submit Donation"}
           </Button>
         </form>
       </CardContent>

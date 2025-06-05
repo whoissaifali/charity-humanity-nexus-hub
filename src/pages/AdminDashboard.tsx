@@ -1,21 +1,23 @@
-
 import React, { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import PaymentMethodsManagement from '@/components/PaymentMethodsManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, Users, DollarSign, Activity, Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, Users, DollarSign, Activity, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('overview');
 
   // Check if user is admin
@@ -33,6 +35,13 @@ const AdminDashboard = () => {
     },
     enabled: !!user
   });
+
+  // Redirect to admin login if not authenticated
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/admin/login');
+    }
+  }, [user, navigate]);
 
   // Fetch dashboard stats
   const { data: stats } = useQuery({
@@ -112,6 +121,12 @@ const AdminDashboard = () => {
             <Shield className="h-16 w-16 text-red-600 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
             <p className="text-gray-600">You need admin privileges to access this page.</p>
+            <Button 
+              onClick={() => navigate('/admin/login')}
+              className="mt-4 bg-red-600 hover:bg-red-700"
+            >
+              Go to Admin Login
+            </Button>
           </div>
         </div>
         <Footer />
@@ -130,9 +145,10 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="donations">Donations</TabsTrigger>
+            <TabsTrigger value="payments">Payment Methods</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
           </TabsList>
@@ -201,6 +217,7 @@ const AdminDashboard = () => {
                       <TableHead>Donor</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Method</TableHead>
+                      <TableHead>Receipt</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -217,6 +234,20 @@ const AdminDashboard = () => {
                         <TableCell>NPR {Number(donation.amount).toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{donation.payment_method}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {donation.receipt_url ? (
+                            <a 
+                              href={donation.receipt_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              View Receipt
+                            </a>
+                          ) : (
+                            <span className="text-gray-400">No receipt</span>
+                          )}
                         </TableCell>
                         <TableCell>{new Date(donation.created_at).toLocaleDateString()}</TableCell>
                         <TableCell>
@@ -243,6 +274,10 @@ const AdminDashboard = () => {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <PaymentMethodsManagement />
           </TabsContent>
 
           <TabsContent value="users">

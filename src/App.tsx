@@ -16,6 +16,7 @@ import FAQ from "./pages/FAQ";
 import Transparency from "./pages/Transparency";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import AdminLogin from "./components/AdminLogin";
 import NotFound from "./pages/NotFound";
 
 // Create query client outside component to prevent recreation
@@ -40,6 +41,7 @@ const AppRoutes = () => (
     <Route path="/faq" element={<FAQ />} />
     <Route path="/transparency" element={<Transparency />} />
     <Route path="/admin" element={<AdminDashboard />} />
+    <Route path="/admin/login" element={<AdminLogin />} />
     <Route path="/dashboard" element={<UserDashboard />} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />

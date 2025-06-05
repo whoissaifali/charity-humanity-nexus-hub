@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_sessions: {
+        Row: {
+          admin_id: string
+          id: string
+          ip_address: string | null
+          login_time: string
+          logout_time: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          admin_id: string
+          id?: string
+          ip_address?: string | null
+          login_time?: string
+          logout_time?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          admin_id?: string
+          id?: string
+          ip_address?: string | null
+          login_time?: string
+          logout_time?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
@@ -18,11 +45,13 @@ export type Database = {
           donor_email: string
           donor_name: string
           id: string
+          notes: string | null
           payment_method: string
           receipt_url: string | null
           status: string
           user_id: string | null
           verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           amount: number
@@ -32,11 +61,13 @@ export type Database = {
           donor_email: string
           donor_name: string
           id?: string
+          notes?: string | null
           payment_method: string
           receipt_url?: string | null
           status?: string
           user_id?: string | null
           verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           amount?: number
@@ -46,11 +77,13 @@ export type Database = {
           donor_email?: string
           donor_name?: string
           id?: string
+          notes?: string | null
           payment_method?: string
           receipt_url?: string | null
           status?: string
           user_id?: string | null
           verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
@@ -96,6 +129,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       our_work: {
         Row: {
           amount_spent: number | null
@@ -138,12 +201,49 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          account_details: Json
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          method_name: string
+          method_type: string
+          qr_code_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_details: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          method_name: string
+          method_type: string
+          qr_code_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_details?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          method_name?: string
+          method_type?: string
+          qr_code_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           country: string | null
           created_at: string
           full_name: string | null
           id: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
@@ -151,6 +251,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
@@ -158,6 +259,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
@@ -195,6 +297,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_donation_stats: {
+        Row: {
+          created_at: string
+          donation_count: number
+          id: string
+          last_donation_date: string | null
+          rank_position: number | null
+          total_donated: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          donation_count?: number
+          id?: string
+          last_donation_date?: string | null
+          rank_position?: number | null
+          total_donated?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          donation_count?: number
+          id?: string
+          last_donation_date?: string | null
+          rank_position?: number | null
+          total_donated?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -203,7 +338,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -318,6 +453,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

@@ -14,10 +14,13 @@ import {
   LogIn,
   UserPlus,
   LogOut,
-  User
+  User,
+  Settings
 } from 'lucide-react';
 import AuthModal from './AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,6 +28,22 @@ const Navigation = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const location = useLocation();
   const { user, signOut, loading } = useAuth();
+
+  // Check user role
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
 
   const navItems = [
     { name: 'Donate Now', href: '/donate', icon: Heart },
@@ -83,10 +102,32 @@ const Navigation = () => {
             <div className="hidden lg:flex items-center space-x-4">
               {user ? (
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 text-gray-700">
+                  <Link 
+                    to="/dashboard"
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                      isActive('/dashboard') 
+                        ? 'bg-red-100 text-red-700' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
                     <User className="h-4 w-4" />
-                    <span className="text-sm">{user.email}</span>
-                  </div>
+                    <span className="text-sm">Dashboard</span>
+                  </Link>
+                  
+                  {userProfile?.role === 'admin' && (
+                    <Link 
+                      to="/admin"
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
+                        isActive('/admin') 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span className="text-sm">Admin</span>
+                    </Link>
+                  )}
+                  
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -151,6 +192,39 @@ const Navigation = () => {
                     <span className="font-medium">{item.name}</span>
                   </Link>
                 ))}
+                
+                {user && (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors duration-200 ${
+                        isActive('/dashboard')
+                          ? 'text-red-600 bg-red-50'
+                          : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <User className="h-5 w-5" />
+                      <span className="font-medium">Dashboard</span>
+                    </Link>
+                    
+                    {userProfile?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className={`flex items-center space-x-3 px-4 py-2 rounded-lg transition-colors duration-200 ${
+                          isActive('/admin')
+                            ? 'text-red-600 bg-red-50'
+                            : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                        }`}
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings className="h-5 w-5" />
+                        <span className="font-medium">Admin</span>
+                      </Link>
+                    )}
+                  </>
+                )}
+                
                 <div className="px-4 pt-4 border-t border-gray-200 space-y-2">
                   {user ? (
                     <div className="space-y-2">

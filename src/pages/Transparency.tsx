@@ -4,8 +4,41 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { TrendingUp, DollarSign, Users, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const Transparency = () => {
+  // Fetch transparency data
+  const { data: stats } = useQuery({
+    queryKey: ['transparency-stats'],
+    queryFn: async () => {
+      const [donationsResult, transactionsResult, usersResult] = await Promise.all([
+        supabase.from('donations').select('amount, status'),
+        supabase.from('transactions').select('amount, type, description, created_at'),
+        supabase.from('user_donation_stats').select('total_donated')
+      ]);
+
+      const verifiedDonations = donationsResult.data?.filter(d => d.status === 'verified') || [];
+      const totalDonations = verifiedDonations.reduce((sum, d) => sum + Number(d.amount), 0);
+      
+      const expenses = transactionsResult.data?.filter(t => t.type === 'expense') || [];
+      const totalExpenses = expenses.reduce((sum, t) => sum + Number(t.amount), 0);
+      
+      const currentBalance = totalDonations - totalExpenses;
+      const peopleHelped = Math.floor(totalExpenses / 300); // Estimate based on average help cost
+
+      const recentTransactions = transactionsResult.data?.slice(0, 5) || [];
+
+      return {
+        totalDonations,
+        totalExpenses,
+        currentBalance,
+        peopleHelped,
+        recentTransactions
+      };
+    }
+  });
+
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -27,7 +60,7 @@ const Transparency = () => {
             <CardContent>
               <div className="flex items-center space-x-2">
                 <DollarSign className="h-8 w-8 text-green-600" />
-                <span className="text-2xl font-bold">NPR 2,45,000</span>
+                <span className="text-2xl font-bold">NPR {stats?.totalDonations?.toLocaleString() || 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -39,7 +72,7 @@ const Transparency = () => {
             <CardContent>
               <div className="flex items-center space-x-2">
                 <Activity className="h-8 w-8 text-blue-600" />
-                <span className="text-2xl font-bold">NPR 2,20,000</span>
+                <span className="text-2xl font-bold">NPR {stats?.totalExpenses?.toLocaleString() || 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -51,7 +84,7 @@ const Transparency = () => {
             <CardContent>
               <div className="flex items-center space-x-2">
                 <TrendingUp className="h-8 w-8 text-red-600" />
-                <span className="text-2xl font-bold">NPR 25,000</span>
+                <span className="text-2xl font-bold">NPR {stats?.currentBalance?.toLocaleString() || 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -63,7 +96,7 @@ const Transparency = () => {
             <CardContent>
               <div className="flex items-center space-x-2">
                 <Users className="h-8 w-8 text-purple-600" />
-                <span className="text-2xl font-bold">750</span>
+                <span className="text-2xl font-bold">{stats?.peopleHelped || 0}</span>
               </div>
             </CardContent>
           </Card>
@@ -76,27 +109,23 @@ const Transparency = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Donation from John Doe</p>
-                    <p className="text-sm text-gray-600">2024-12-03</p>
+                {stats?.recentTransactions?.map((transaction, index) => (
+                  <div key={index} className="flex justify-between items-center py-2 border-b">
+                    <div>
+                      <p className="font-medium">{transaction.description}</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(transaction.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className={`font-semibold ${
+                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {transaction.type === 'income' ? '+' : '-'}NPR {Number(transaction.amount).toLocaleString()}
+                    </span>
                   </div>
-                  <span className="text-green-600 font-semibold">+NPR 5,000</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Food Distribution - Bardiya</p>
-                    <p className="text-sm text-gray-600">2024-12-02</p>
-                  </div>
-                  <span className="text-red-600 font-semibold">-NPR 15,000</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-medium">Donation from Jane Smith</p>
-                    <p className="text-sm text-gray-600">2024-12-01</p>
-                  </div>
-                  <span className="text-green-600 font-semibold">+NPR 10,000</span>
-                </div>
+                )) || (
+                  <p className="text-gray-500 text-center py-8">No recent transactions</p>
+                )}
               </div>
             </CardContent>
           </Card>
